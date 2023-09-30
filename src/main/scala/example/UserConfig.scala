@@ -3,12 +3,15 @@ import com.google.gson.Gson
 import org.yaml.snakeyaml.Yaml
 import zio.ZLayer
 
-import java.io.FileReader
+import java.io.{File, FileReader}
+import java.util
 
-private val gson     = new Gson()
-private val reader   = new FileReader("user-config.yml")
-private val yamlData = new Yaml().load(reader)
-val jsonString       = new Gson().toJson(yamlData)
+private val gson = new Gson()
+private val reader = new FileReader(
+  new File("src/main/scala/example/user-config.yml")
+)
+private val yamlData: util.LinkedHashMap[String, Any] = new Yaml().load(reader)
+val jsonString = new Gson().toJson(yamlData)
 
 case class UserConfig(maxUserid: Int)
 object UserConfig:
