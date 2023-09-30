@@ -10,7 +10,7 @@ private val user3 = User(3, "test3", "test3@test.com")
 
 class InMemoryUserRepoImpl(userConfig: UserConfig) extends UserRepo:
 
-  def findAll: RIO[List[User]] = ZIO.succeed(
+  def findAll: UIO[List[User]] = ZIO.succeed(
     List(
       user1,
       user2,
@@ -18,19 +18,17 @@ class InMemoryUserRepoImpl(userConfig: UserConfig) extends UserRepo:
     )
   )
 
-  def findById(id: Int): RIO[Option[User]] =
-    if id == 1 then ZIO.succeed(Some(user1))
-    else if id >= userConfig.maxUserid then
-      ZIO.fail(
-        new Exception(s"We have less then ${userConfig.maxUserid} people.")
-      )
-    else ZIO.succeed(None)
+  def findById(id: Int): UIO[Option[User]] =
+    val result = id match
+      case 1 => Some(user1)
+      case 2 => Some(user2)
+      case 3 => Some(user3)
+      case _ => None
+    ZIO.succeed(result)
 
-  def create(user: User): Task[User] = ZIO.succeed(user)
+  def create(user: User): UIO[User] = ZIO.succeed(user)
 
-  def delete(id: Int): Task[Unit] =
-    if List(1, 2, 3).contains(id) then ZIO.unit
-    else ZIO.fail(new Exception("User not found"))
+  def delete(id: Int): UIO[Unit] = ZIO.unit
 
 object InMemoryUserRepoImpl:
   def layer: ZLayer[UserConfig, Nothing, UserRepo] =

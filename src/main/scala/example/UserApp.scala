@@ -10,25 +10,20 @@ private val userPath = Root / "api" / "v1" / "users"
 class UserApp(userRepo: UserRepo):
   val http: Http[Any, Nothing, Request, Response] =
     Http.collectZIO[Request]:
+      case Method.GET -> userPath / id => userRepo.findById(id.toInt).map:
+        case Some(u) => Response.json(u.toJson)
+        case None => Response.status(Status.NotFound)
+
       case Method.GET -> userPath =>
         (for
          users <- userRepo.findAll
          json = Util.jsonStringToList(users.map(_.toJson))
-        yield Response.json(json)).tap.orDie
+        yield Response.json(json))
 
-      case Method.GET -> userPath / id =>
-        userRepo.findById(id.toInt).either.map:
-          case Right(Some(user)) => Response.json(user.toJson)
-          case Right(None) => Response.GetError
-          case Left(_) => Response.InternalServerError
-        userRepo.findById(id.toInt).map {
-          case Some(user) => Response.json(user.toJson)
-          case None => Response.GetError
-        }
 
       case req @ Method.POST -> userPath =>
         for
-          body <- req.body.asString
+          body <- req.body.asString.orDie
           user = User.fromJson(body)
           _    <- userRepo.create(user)
         yield Response.json(user.toJson)
